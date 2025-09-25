@@ -607,7 +607,7 @@
                 </div>
                 <div class="form-group">
                     <label for="project">Project Type</label>
-                    <select id="project" name="project" style="width: 100%; padding: 1rem; background: transparent; border: 2px solid var(--matrix-green); border-radius: 5px; color: var(--matrix-green);">
+                    <select id="project" name="project" style="width: 100%; padding: 1rem; background: transparent; border: 2px solid var(--matrix-green); border-radius: 5px; color: var(--matrix-green[...]
                         <option value="pcb-design">PCB Design</option>
                         <option value="embedded">Embedded Systems</option>
                         <option value="ai-hardware">AI Hardware</option>
@@ -699,6 +699,7 @@
         });
 
         // AI Chatbot Functions
+        const GEMINI_API_KEY = 'YOUR_API_KEY'; // <-- IMPORTANT: Replace with your actual Gemini API Key
         let chatOpen = false;
 
         function toggleChat() {
@@ -728,21 +729,12 @@
                     </div>
                 </div>
             `;
-
+            messages.scrollTop = messages.scrollHeight;
             input.value = '';
 
-            // Simulate AI response (replace with actual Gemini API call)
-            setTimeout(() => {
-                const responses = [
-                    "I can help you with PCB design optimization and component selection. What's your project voltage and current requirements?",
-                    "For embedded systems, I recommend considering ARM Cortex-M series for power efficiency. What's your application domain?",
-                    "Circuit analysis requires understanding your signal frequencies and impedance requirements. Could you provide more details?",
-                    "Hardware debugging often involves systematic isolation of components. Have you checked power supply stability first?",
-                    "For AI hardware acceleration, consider dedicated neural processing units. What's your inference latency requirement?"
-                ];
-                
-                const response = responses[Math.floor(Math.random() * responses.length)];
-                
+            // Call Gemini API
+            if (GEMINI_API_KEY === 'AIzaSyBmyFRBnyDEDF-rdB6BOLKIyG-uum8FyQY') {
+                const response = "Please replace 'YOUR_API_KEY' with your actual Gemini API key in the script section.";
                 messages.innerHTML += `
                     <div style="margin-bottom: 1rem;">
                         <div style="background: var(--card-bg); border: 1px solid var(--electric-cyan); padding: 0.8rem; border-radius: 10px; max-width: 80%;">
@@ -750,9 +742,47 @@
                         </div>
                     </div>
                 `;
-                
                 messages.scrollTop = messages.scrollHeight;
-            }, 1000);
+                return;
+            }
+
+            try {
+                const apiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        "contents": [{
+                            "parts": [{ "text": `You are a hardware engineering AI assistant. Keep your responses concise and relevant to hardware engineering. User query: "${message}"` }]
+                        }]
+                    })
+                });
+
+                if (!apiResponse.ok) {
+                    throw new Error(`API Error: ${apiResponse.statusText}`);
+                }
+
+                const responseData = await apiResponse.json();
+                const aiMessage = responseData.candidates[0].content.parts[0].text;
+
+                messages.innerHTML += `
+                    <div style="margin-bottom: 1rem;">
+                        <div style="background: var(--card-bg); border: 1px solid var(--electric-cyan); padding: 0.8rem; border-radius: 10px; max-width: 80%;">
+                            ${aiMessage}
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                console.error("Error calling Gemini API:", error);
+                messages.innerHTML += `
+                    <div style="margin-bottom: 1rem;">
+                        <div style="background: var(--card-bg); border: 1px solid var(--electric-cyan); padding: 0.8rem; border-radius: 10px; max-width: 80%;">
+                            Error communicating with the AI. Please check the console for details.
+                        </div>
+                    </div>
+                `;
+            }
 
             messages.scrollTop = messages.scrollHeight;
         }
@@ -765,7 +795,7 @@
             const button = e.target.querySelector('button');
             const originalText = button.textContent;
             button.textContent = 'Transmitting...';
-            button.style.background = var(--electric-cyan);
+            button.style.background = 'var(--electric-cyan)';
             
             setTimeout(() => {
                 button.textContent = 'Message Sent!';
@@ -790,6 +820,7 @@
                     skillBars.forEach(bar => {
                         bar.style.animation = 'skill-load 2s ease-in-out';
                     });
+                    observer.unobserve(entry.target); // Animate only once
                 }
             });
         }, observerOptions);
